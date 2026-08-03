@@ -29,6 +29,16 @@ Found 1 business(es):
 1. Example Studio [CRM, APPOINTMENTS] (64a1f2c9e4b0a1b2c3d4e5f6)
 ```
 
+## Signing up
+
+No account yet? Create one from the terminal — the generated password prints
+exactly once, and the session is stored so every other command works
+immediately:
+
+```bash
+iterola signup --email founder@example.com --json
+```
+
 ## Authentication
 
 Two ways in, both stored in `~/.iterola/`:

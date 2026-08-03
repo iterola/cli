@@ -9,6 +9,7 @@ const loginCommand = require('./loginCommand.js')
 const logoutCommand = require('./logoutCommand.js')
 const schemaCommand = require('./schemaCommand.js')
 const servicesCommand = require('./servicesCommand.js')
+const signupCommand = require('./signupCommand.js')
 const packageJson = require('./package.json')
 
 program
@@ -18,6 +19,7 @@ program
       ' of your business from the terminal',
   )
   .version(packageJson.version)
+  .addCommand(signupCommand())
   .addCommand(loginCommand())
   .addCommand(logoutCommand())
   .addCommand(businessesCommand())

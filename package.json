@@ -1,6 +1,6 @@
 {
   "name": "iterola",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": false,
   "description": "Iterola CLI — manage clients, services, and appointments of your business from the terminal",
   "license": "Apache-2.0",
