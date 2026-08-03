@@ -1,0 +1,46 @@
+{
+  "name": "iterola",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Iterola CLI — manage clients, services, and appointments of your business from the terminal",
+  "license": "Apache-2.0",
+  "repository": "github:iterola/cli",
+  "homepage": "https://www.iterola.com/",
+  "author": "Iterola",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "bin": {
+    "iterola": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "develop": "node index.js",
+    "prepublishOnly": "npm run build",
+    "publish:npm": "npm publish --access public",
+    "publish:repo": "node scripts/publishCli.mjs"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "keywords": [
+    "crm",
+    "appointments",
+    "scheduling",
+    "email",
+    "cli"
+  ],
+  "dependencies": {
+    "commander": "8.3.0",
+    "fs-extra": "10.1.0",
+    "inquirer": "8.2.5",
+    "node-localstorage": "2.2.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.4",
+    "eslint": "10.8.0"
+  }
+}
