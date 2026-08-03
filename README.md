@@ -18,7 +18,7 @@ Requires Node.js 18 or newer.
 ## Quick start
 
 ```bash
-iterola login              # paste an API key secret (input is masked)
+iterola login              # choose browser or API key login
 iterola businesses list    # the businesses of your organization
 iterola clients list --businessId 64a1f2c9e4b0a1b2c3d4e5f6 -n 10
 iterola appointments list --startTime 2026-08-01T00:00:00.000Z
@@ -31,17 +31,34 @@ Found 1 business(es):
 
 ## Authentication
 
-The CLI authenticates with an **Iterola API key**. An administrator of your
-organization creates one in the Iterola dashboard: open your business, go to
-**Appointments → Settings → API keys** (`/businesses/<businessId>/api-keys/new`
-on [app.iterola.com](https://app.iterola.com)). The secret is shown **once**,
-when the key is created, and never again — store it somewhere safe.
+Two ways in, both stored in `~/.iterola/`:
 
-`iterola login` prompts for that secret with a masked input — it is never
-accepted as a command-line argument, so it cannot leak into your shell
-history — verifies it against the API, and stores it in `~/.iterola/`.
-Every request then carries `Authorization: Basic base64(<key secret>)`.
-`iterola logout` deletes the stored secret.
+- **Browser** — `iterola login --browser` opens
+  [app.iterola.com](https://app.iterola.com) in your browser to log in with
+  your Iterola account, then stores a token session. Tokens are refreshed
+  automatically; requests carry `Authorization: Token base64(<jwt>)`.
+- **API key** — `iterola login --with-key` prompts for an API key secret
+  with a masked input. An administrator of your organization creates the
+  key in the Iterola dashboard: open your business, go to **Appointments →
+  Settings → API keys** (`/businesses/<businessId>/api-keys/new` on
+  [app.iterola.com](https://app.iterola.com)). The secret is shown **once**,
+  when the key is created, and never again — store it somewhere safe. It is
+  never accepted as a command-line argument, so it cannot leak into your
+  shell history. Requests carry `Authorization: Basic base64(<key secret>)`.
+
+Plain `iterola login` in a terminal asks which method to use.
+`iterola logout` deletes everything stored in `~/.iterola/`.
+
+**Headless / CI / agents** — export `ITEROLA_API_KEY=<key secret>` and skip
+`login` entirely: every command reads it at request time. When several
+credentials exist the precedence is: stored browser session, then stored
+key, then the environment variable — a stored login always wins over an
+exported key, so a globally exported `ITEROLA_API_KEY` never hijacks an
+interactive session.
+
+Without a terminal the CLI never hangs and never opens a browser:
+`iterola login` (and any command run without credentials) fails immediately
+with exit code 1 and instructions on stderr.
 
 A key belongs to a single organization, so the organization never has to be
 named. A key can additionally be locked to one business — such a key reads
@@ -50,23 +67,52 @@ unnecessary.
 
 ### Scopes
 
-Each key carries per-resource scopes: `appointments:read`,
+Each API key carries per-resource scopes: `appointments:read`,
 `appointments:write`, `clients:read`, `clients:write`, `services:read`,
 `services:write`, and `businesses:read`. New keys start read-only; an
 administrator widens them in the dashboard. There is deliberately no
 `businesses:write` — businesses are managed in the dashboard, not through
 the API. A command hitting a scope the key lacks fails with
 `403: API key is missing the "…" scope`. Requests are rate limited per key;
-going over the limit returns `429`.
+going over the limit returns `429`. A browser login carries your own user
+permissions instead of key scopes.
+
+## JSON output
+
+Every subcommand accepts `--json` and prints real, parseable JSON on stdout
+— plain `JSON.stringify`, no colors. Without the flag, `list` and `read`
+print human summaries. Mutations with `--json` print a small result object:
+`{ "ok": true, "id": "…" }` for `add`/`update`,
+`{ "ok": true, "deleted": ["…"] }` for `delete`.
+
+Errors always go to stderr with exit code 1; with `--json` the error is a
+single JSON line — `{"error":{"message":"…","status":404}}` — so stdout
+stays clean for parsing.
+
+```bash
+iterola clients list --json -n 100 | jq '.[] | {id: ._id, name, email}'
+```
 
 ## Commands
 
 ### Session
 
 ```bash
-iterola login    # prompt for an API key secret (masked); stored in ~/.iterola/
-iterola logout   # clear the stored secret
+iterola login                # interactive: choose browser or API key login
+iterola login --browser      # log in through app.iterola.com
+iterola login --with-key     # prompt for an API key secret (masked)
+iterola logout               # clear everything stored in ~/.iterola/
 ```
+
+### Schema
+
+```bash
+iterola schema                # the whole command tree as JSON
+iterola schema clients list   # one subtree: its options and arguments
+```
+
+Machine-readable discovery of every command, option, and argument — for
+agents and scripts that would otherwise scrape `--help` text.
 
 ### Businesses (read-only)
 
@@ -149,9 +195,11 @@ iterola skills get iterola   # print a bundled SKILL.md to stdout
 ## Configuration
 
 `ITEROLA_API_URL` overrides the API endpoint (default
-`https://api.iterola.com`) — only needed against a non-production deployment.
-The API key secret is stored only in `~/.iterola/`; the CLI sends it to the
-Iterola API and nowhere else, and collects no telemetry.
+`https://api.iterola.com`) — only needed against a non-production
+deployment. `ITEROLA_API_KEY` supplies an API key secret from the
+environment for headless use. Stored credentials live only in `~/.iterola/`;
+the CLI sends them to the Iterola API and nowhere else, and collects no
+telemetry.
 
 ## Usage with AI agents
 
@@ -176,9 +224,11 @@ Or paste this into your `AGENTS.md` / `CLAUDE.md`:
 ## Iterola
 
 Use the `iterola` CLI for Iterola data: businesses, clients, services, and
-appointments. Run `npx iterola skills get iterola` for the full guide, and
-`iterola --help` for the command reference. Log in once with
-`iterola login` (an API key created in the Iterola dashboard).
+appointments. Run `npx iterola skills get iterola` for the full guide,
+`iterola schema` for the command tree as JSON, and `iterola --help` for the
+command reference. Log in once with `iterola login` (browser or API key),
+or export ITEROLA_API_KEY for headless use. Every subcommand accepts
+`--json`.
 ```
 
 Prefer raw HTTP? The same API key authenticates the REST API directly —

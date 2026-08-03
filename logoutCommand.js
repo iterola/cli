@@ -1,21 +1,9 @@
 /* Copyright 2025 Iterola LLC */
-const commander = require('commander')
-const clearSession = require('./session/clearSession.js')
+const logoutCommand = require('@monorepool/agentfirst/logoutCommand.js')
+const session = require('./session.js')
+const { binaryName, envKeyName } = require('./constants.js')
 
-function logoutCommand() {
-  const command = new commander.Command('logout')
-  command.description('clear the API key secret stored in ~/.iterola/')
-  command.action(() => {
-    try {
-      clearSession()
-      console.log('logged out')
-    } catch (error) {
-      console.error('error', error.message)
-      process.exitCode = 1
-    }
-  })
-
-  return command
-}
-
-module.exports = logoutCommand
+// Clears everything stored in ~/.iterola/ — the API key secret and any
+// browser-login tokens. A key exported as ITEROLA_API_KEY stays in effect;
+// the shared factory says so instead of silently staying authenticated.
+module.exports = () => logoutCommand({ binaryName, session, envKeyName })

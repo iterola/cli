@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /* Copyright 2025 Iterola LLC */
 const program = require('commander')
+const skillsCommand = require('@monorepool/agentfirst/skillsCommand.js')
 const appointmentsCommand = require('./appointmentsCommand.js')
 const businessesCommand = require('./businessesCommand.js')
 const clientsCommand = require('./clientsCommand.js')
 const loginCommand = require('./loginCommand.js')
 const logoutCommand = require('./logoutCommand.js')
+const schemaCommand = require('./schemaCommand.js')
 const servicesCommand = require('./servicesCommand.js')
-const skillsCommand = require('./skillsCommand.js')
 const packageJson = require('./package.json')
 
 program
@@ -23,5 +24,11 @@ program
   .addCommand(clientsCommand())
   .addCommand(servicesCommand())
   .addCommand(appointmentsCommand())
-  .addCommand(skillsCommand())
-  .parse(process.argv)
+  // baseDirectory must be this file's directory: the shared factory resolves
+  // the bundled skills/ relative to it (dist/index.js → ../skills).
+  .addCommand(skillsCommand({ baseDirectory: __dirname }))
+
+// `schema` describes the assembled program, itself included, so it is added
+// after every other command is registered and before parsing.
+program.addCommand(schemaCommand(program))
+program.parse(process.argv)
