@@ -1,21 +1,19 @@
 /* Copyright 2025 Iterola LLC */
-const commander = require('commander')
-const {
-  printJson,
-  withJson,
-  fail,
-} = require('@monorepool/agentfirst/output.js')
-const api = require('./request.js')
-const { dim, bold, cyan } = require('./formatOutput.js')
 
-// Businesses are read-only through the public API by design: a business is
-// the per-tenant container created at signup, so there is no businesses:write
-// scope.
+import { fail, printJson, withJson } from '@monorepool/agentfirst/output.js'
+import commander from 'commander'
+
+import __module1 from './formatOutput.js'
+import api from './request.js'
+
+const { dim, bold, cyan } = __module1
+
+// API keys keep businesses read-only because there is no businesses:write
+// scope. Browser sessions may update tenant branding through the same
+// access-token-only route used by the app.
 function businessesCommand() {
   const command = new commander.Command('businesses')
-  command.description(
-    'read the businesses of your organization (read-only, businesses:read)',
-  )
+  command.description('read and update the businesses of your organization')
 
   withJson(
     command
@@ -105,7 +103,50 @@ function businessesCommand() {
     }
   })
 
+  withJson(
+    command
+      .command('update <businessId>')
+      .description('update a business through an authenticated browser session')
+      .option('--primary-color <hex>', 'set the primary brand color')
+      .option('--secondary-color <hex>', 'set the secondary brand color'),
+  ).action(async (businessId, options) => {
+    try {
+      if (
+        options.primaryColor === undefined &&
+        options.secondaryColor === undefined
+      ) {
+        fail(
+          new Error(
+            'No updates specified. Use --primary-color or --secondary-color.',
+          ),
+          { json: options.json },
+        )
+        return
+      }
+
+      const business = await api.get(`/api/businesses/${businessId}`)
+      const updated = {
+        ...business,
+        ...(options.primaryColor === undefined
+          ? {}
+          : { primaryColor: options.primaryColor }),
+        ...(options.secondaryColor === undefined
+          ? {}
+          : { secondaryColor: options.secondaryColor }),
+      }
+      const result = await api.put(`/api/businesses/${businessId}`, updated)
+
+      if (options.json) {
+        printJson({ ok: true, id: result._id || businessId })
+      } else {
+        console.log(`Updated ${result.name || business.name || businessId}`)
+      }
+    } catch (error) {
+      fail(error, { json: options.json })
+    }
+  })
+
   return command
 }
 
-module.exports = businessesCommand
+export default businessesCommand

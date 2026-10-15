@@ -1,8 +1,13 @@
 /* Copyright 2025 Iterola LLC */
-const loginCommand = require('@monorepool/agentfirst/loginCommand.js')
-const api = require('./request.js')
-const session = require('./session.js')
-const { binaryName, appUrl, envKeyName } = require('./constants.js')
+import loginCommand from '@monorepool/agentfirst/loginCommand.js'
+
+import __module1 from './constants.js'
+import getApiUrl from './getApiUrl.js'
+import packageJson from './package.json' with { type: 'json' }
+import api from './request.js'
+import session from './session.js'
+
+const { binaryName, appUrl, envKeyName } = __module1
 
 // Verifies a pasted key with the cheapest read the API offers. New keys
 // start with every :read scope, so businesses:read is normally present.
@@ -29,9 +34,19 @@ async function verify() {
   }
 }
 
-// `iterola login` — dual-mode via the shared factory: `--browser` opens
-// app.iterola.com/cli and stores a token session; `--with-key` prompts
-// (masked) for an API key secret. Headless with no flags it fails fast
+// `iterola login` via the shared factory: `--browser` opens app.iterola.com/cli
+// and stores a token session (the same run also prints a one-time code, so it
+// can be finished from another device); `--device` approves that code from a
+// phone or another computer, with no browser on this machine; `--with-key`
+// prompts (masked) for an API key secret. Headless with no flags it fails fast
 // with instructions instead of hanging on a prompt or opening a browser.
-module.exports = () =>
-  loginCommand({ binaryName, appUrl, session, verify, envKeyName })
+export default () =>
+  loginCommand({
+    binaryName,
+    appUrl,
+    getApiUrl,
+    version: packageJson.version,
+    session,
+    verify,
+    envKeyName,
+  })

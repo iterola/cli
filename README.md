@@ -18,7 +18,7 @@ Requires Node.js 18 or newer.
 ## Quick start
 
 ```bash
-iterola login              # choose browser or API key login
+iterola login              # choose browser, another device or API key
 iterola businesses list    # the businesses of your organization
 iterola clients list --businessId 64a1f2c9e4b0a1b2c3d4e5f6 -n 10
 iterola appointments list --startTime 2026-08-01T00:00:00.000Z
@@ -41,12 +41,22 @@ iterola signup --email founder@example.com --json
 
 ## Authentication
 
-Two ways in, both stored in `~/.iterola/`:
+Three ways in, all stored in `~/.iterola/`:
 
 - **Browser** — `iterola login --browser` opens
   [app.iterola.com](https://app.iterola.com) in your browser to log in with
   your Iterola account, then stores a token session. Tokens are refreshed
   automatically; requests carry `Authorization: Token base64(<jwt>)`.
+- **Another device** — `iterola login --device` is for a terminal whose
+  browser you cannot use: a remote desktop without copy and paste, an SSH
+  session, a server. It prints a link, a QR code and a one-time code such as
+  `WDJB-MJHT`. Scan the QR code with your phone, or open app.iterola.com/cli
+  on any device where you are signed in to Iterola and type the code; check
+  that it matches the terminal and approve. The terminal logs itself in within
+  a couple of seconds and stores a session like the browser login. The code
+  works once and expires after ten minutes. `--browser` prints the same code
+  beside its link, so a browser that opens on the wrong machine is no dead
+  end.
 - **API key** — `iterola login --with-key` prompts for an API key secret
   with a masked input. An administrator of your organization creates the
   key in the Iterola dashboard: open your business, go to **Appointments →
@@ -68,7 +78,9 @@ interactive session.
 
 Without a terminal the CLI never hangs and never opens a browser:
 `iterola login` (and any command run without credentials) fails immediately
-with exit code 1 and instructions on stderr.
+with exit code 1 and instructions on stderr. `iterola login --device` still
+works there: it prints the link and the code and waits for someone to approve
+them.
 
 A key belongs to a single organization, so the organization never has to be
 named. A key can additionally be locked to one business — such a key reads
@@ -81,8 +93,8 @@ Each API key carries per-resource scopes: `appointments:read`,
 `appointments:write`, `clients:read`, `clients:write`, `services:read`,
 `services:write`, and `businesses:read`. New keys start read-only; an
 administrator widens them in the dashboard. There is deliberately no
-`businesses:write` — businesses are managed in the dashboard, not through
-the API. A command hitting a scope the key lacks fails with
+`businesses:write` — business mutations require a browser session rather than
+an API key. A command hitting a scope the key lacks fails with
 `403: API key is missing the "…" scope`. Requests are rate limited per key;
 going over the limit returns `429`. A browser login carries your own user
 permissions instead of key scopes.
@@ -108,8 +120,9 @@ iterola clients list --json -n 100 | jq '.[] | {id: ._id, name, email}'
 ### Session
 
 ```bash
-iterola login                # interactive: choose browser or API key login
+iterola login                # interactive: browser, another device or API key
 iterola login --browser      # log in through app.iterola.com
+iterola login --device       # approve from a phone or another computer
 iterola login --with-key     # prompt for an API key secret (masked)
 iterola logout               # clear everything stored in ~/.iterola/
 ```
@@ -124,13 +137,18 @@ iterola schema clients list   # one subtree: its options and arguments
 Machine-readable discovery of every command, option, and argument — for
 agents and scripts that would otherwise scrape `--help` text.
 
-### Businesses (read-only)
+### Businesses
 
 ```bash
 iterola businesses list              # businesses of the organization (--json)
 iterola businesses get <businessId>  # raw JSON for one business
 iterola businesses read <businessId> # formatted view: status, apps, currency
+iterola businesses update <businessId> --primary-color '#386FA4' --secondary-color '#FFD60A'
 ```
+
+API keys can read businesses with `businesses:read`. Updating tenant branding
+uses the access-token-only endpoint, so `businesses update` requires a browser
+login and preserves fields not named on the command line.
 
 ### Clients
 

@@ -1,8 +1,11 @@
 /* Copyright 2025 Iterola LLC */
-const signupCommand = require('@monorepool/agentfirst/signupCommand.js')
-const getApiUrl = require('./getApiUrl.js')
-const session = require('./session.js')
-const { binaryName, appUrl } = require('./constants.js')
+import signupCommand from '@monorepool/agentfirst/signupCommand.js'
+
+import __module1 from './constants.js'
+import getApiUrl from './getApiUrl.js'
+import session from './session.js'
+
+const { binaryName, appUrl } = __module1
 
 // The step that used to need a person. `login` assumes the account already
 // exists; an agent pointed at iterola.com for the first time has nothing to
@@ -14,5 +17,4 @@ const { binaryName, appUrl } = require('./constants.js')
 // drives the same public POST /api/signup the web signup form posts to, then
 // stores the session in the same ~/.iterola/ the browser login writes — so
 // every other command works immediately afterwards.
-module.exports = () =>
-  signupCommand({ binaryName, getApiUrl, appUrl, session })
+export default () => signupCommand({ binaryName, getApiUrl, appUrl, session })

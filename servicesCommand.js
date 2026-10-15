@@ -1,15 +1,15 @@
 /* Copyright 2025 Iterola LLC */
-const commander = require('commander')
-const {
-  printJson,
-  withJson,
-  fail,
-} = require('@monorepool/agentfirst/output.js')
-const buildQuery = require('./buildQuery.js')
-const parseBody = require('./parseBody.js')
-const api = require('./request.js')
-const resolveBusinessId = require('./resolveBusinessId.js')
-const { dim, bold, cyan } = require('./formatOutput.js')
+
+import { fail, printJson, withJson } from '@monorepool/agentfirst/output.js'
+import commander from 'commander'
+
+import buildQuery from './buildQuery.js'
+import __module1 from './formatOutput.js'
+import parseBody from './parseBody.js'
+import api from './request.js'
+import resolveBusinessId from './resolveBusinessId.js'
+
+const { dim, bold, cyan } = __module1
 
 function servicesCommand() {
   const command = new commander.Command('services')
@@ -221,4 +221,4 @@ function servicesCommand() {
   return command
 }
 
-module.exports = servicesCommand
+export default servicesCommand
